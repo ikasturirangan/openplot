@@ -9,24 +9,30 @@ import { ReloadIcon } from '@radix-ui/react-icons';
 import { GitHubLogoIcon } from '@radix-ui/react-icons';
 import { ResponsiveContainer, Legend, Line, LineChart, Tooltip, XAxis, YAxis, Brush } from 'recharts';
 
+// Define the data item type
+interface DataItem {
+  name: string;
+  pv: number;
+}
+
 const handleResetGraph = () => {
   window.location.reload();
 }
 
 export default function Home() {
-  const [data, setData] = useState([]);
+  // Initialize state with explicit type
+  const [data, setData] = useState<DataItem[]>([]);
 
-  const handleFileUpload = (event: { target: { files: any[]; }; }) => {
-    const file = event.target.files[0];
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files && event.target.files[0];
     if (file) {
       Papa.parse(file, {
         complete: (result) => {
-         
-          const parsedData = result.data.map((item: string[], _index: number) => ({
-            
-            name: item[0],
-            pv: +item[1], 
-          })).filter((_item, index) => index !== 0); 
+          const parsedData = (result.data as (string | number)[][]).map((item, _index) => ({
+            name: item[0]?.toString() ?? '',
+            pv: Number(item[1]), 
+          })).filter((_item, index) => index !== 0); // Assuming the first row might be headers
+          
           setData(parsedData);
         },
         header: false
@@ -46,11 +52,11 @@ export default function Home() {
         </div>
         <div>
           <Card className='w-full'>
-          <CardHeader className="flex justify-between items-center">
-            <CardTitle className='font-bold text-md'>Graph Plot View</CardTitle>
-          </CardHeader>
-              <CardContent>
-              <ResponsiveContainer width={1200} height={400}>
+            <CardHeader className="flex justify-between items-center">
+              <CardTitle className='font-bold text-md'>Graph Plot View</CardTitle>
+            </CardHeader>
+            <CardContent>
+            <ResponsiveContainer width={1200} height={400}>
                 <LineChart
                   data={data}
                   margin={{
@@ -60,7 +66,6 @@ export default function Home() {
                     bottom: 5,
                   }}
                 >
-                 
                   <XAxis dataKey="name" stroke="#ccc" />
                   <YAxis stroke="#ccc" />
                   <Tooltip
@@ -75,15 +80,13 @@ export default function Home() {
                     stroke="teal"
                     activeDot={{ r: 10, stroke: 'teal', strokeWidth: 2, fill: '#8884d8' }}
                   />
-                    <Brush dataKey="name" height={30} stroke="teal" />
+                  <Brush dataKey="name" height={30} stroke="teal" />
                 </LineChart>
               </ResponsiveContainer>
-
-              </CardContent>
-              <CardFooter>
-                <Button className='font-bold' onClick={handleResetGraph}><ReloadIcon className='mr-3 w-4 h-4'/> Reset Graph Plot</Button>
-              </CardFooter>
-            
+            </CardContent>
+            <CardFooter>
+              <Button className='font-bold' onClick={handleResetGraph}><ReloadIcon className='mr-3 w-4 h-4'/> Reset Graph Plot</Button>
+            </CardFooter>
           </Card>
         </div>
       </main>
